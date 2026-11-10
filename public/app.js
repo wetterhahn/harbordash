@@ -1237,7 +1237,6 @@ function closeSettingsPage() {
 
 function openLoginDialog() {
   if (elements.loginDialog.open) return;
-  document.querySelector('#rememberHint').textContent = `${state.auth?.rememberDays || 180} Tage angemeldet bleiben. Auf gemeinsam genutzten Geräten ausschalten.`;
   elements.loginPassword.value = "";
   document.querySelector("#loginError").hidden = true;
   elements.loginDialog.showModal();

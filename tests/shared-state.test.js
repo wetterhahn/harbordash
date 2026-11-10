@@ -36,7 +36,7 @@ test("shared edits and favicon refresh", async (t) => {
   });
   const login = await fetch('http://127.0.0.1:' + port + '/api/auth/login', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: 'test-password-only-12345', remember: true })
+    body: JSON.stringify({ password: 'test-password-only-12345', remember: true, deviceName: 'Regression test' })
   });
   assert.equal(login.status, 200);
   const cookie = login.headers.get('set-cookie').split(';')[0];

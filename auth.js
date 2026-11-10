@@ -103,6 +103,11 @@ function createAuth({ directory, env = process.env }) {
         fail(res, 401, 'Passwort stimmt nicht.');
         return false;
       }
+      const deviceName = typeof body.deviceName === 'string' ? body.deviceName.trim() : '';
+      if (!deviceName || deviceName.length > 80) {
+        fail(res, 400, 'Bitte einen Gerätenamen mit maximal 80 Zeichen eingeben.');
+        return false;
+      }
       attempts.delete(key);
       const remember = body.remember === true;
       const duration = remember ? days * 86400 : 12 * 3600;
@@ -110,7 +115,7 @@ function createAuth({ directory, env = process.env }) {
       const previous = session(req);
       if (previous) state.sessions = state.sessions.filter(s => s.id !== previous.id);
       state.sessions.push({ id: crypto.randomUUID(), hash: digest(value),
-        label: String(body.deviceName || req.headers['user-agent'] || 'Browser').slice(0, 120),
+        label: deviceName,
         createdAt: now, expiresAt: now + duration * 1000, remember });
       // Bound the store; oldest sessions are evicted when registering a 101st device.
       state.sessions = state.sessions.slice(-100);

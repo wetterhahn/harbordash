@@ -354,22 +354,17 @@
 
     <dialog id="loginDialog" aria-labelledby="loginTitle">
       <form class="dialog-card login-card" id="loginForm">
-        <div class="login-mark" aria-hidden="true">H<span> / </span>D</div>
-        <p class="login-eyebrow">DEIN PERSÖNLICHER STARTPUNKT</p>
-        <h2 id="loginTitle">Willkommen an Bord.</h2>
-        <p class="login-copy">Alles, was du brauchst. Nur für dich.</p>
+        <h2 id="loginTitle">Willkommen zurück</h2>
         <input type="text" name="username" value="owner" autocomplete="username" hidden />
         <label>Dein Passwort
           <input id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="1024" placeholder="Dashboard entsperren" />
         </label>
-        <label>Gerätename <span class="login-optional">(optional)</span>
-          <input id="loginDeviceName" maxlength="80" placeholder="z. B. Mein Laptop" autocomplete="off" />
+        <label>Gerätename
+          <input id="loginDeviceName" required maxlength="80" placeholder="z. B. Mein Laptop" autocomplete="off" />
         </label>
         <label class="remember-device"><input id="loginRemember" type="checkbox" checked /> Dieses Gerät merken</label>
-        <p class="login-hint" id="rememberHint">180 Tage angemeldet bleiben. Auf gemeinsam genutzten Geräten ausschalten.</p>
         <p id="loginError" role="alert" class="login-error" hidden></p>
         <button class="primary" id="loginButton" type="submit">Dashboard öffnen <span aria-hidden="true">↗</span></button>
-        <p class="login-footer">HarborDash · Dein sicherer Heimathafen</p>
       </form>
     </dialog>
 

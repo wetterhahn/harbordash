@@ -78,6 +78,11 @@ test('all private endpoints protected from first boot; no metadata or IP bypass'
     assert.equal(response.headers.get('cache-control'), 'no-store');
   }
   const cookie = (await app.login()).split(';')[0];
+  for (const deviceName of [undefined, '', '   ', 'x'.repeat(81)]) {
+    const invalid = await app.request('/api/auth/login', { method: 'POST', body: { password: PASSWORD, deviceName } });
+    assert.equal(invalid.status, 400);
+    assert.equal(invalid.headers.get('set-cookie'), null);
+  }
   assert.equal((await app.request('/api/setup', { method: 'POST', cookie, body: { title: 'PRIVATE TITLE', profileName: 'PRIVATE PROFILE' } })).status, 200);
   const data = await (await app.request('/api/homebase')).json();
   assert.equal(data.title, 'HarborDash');

@@ -15,7 +15,7 @@ const request = (route, options = {}) => fetch('http://127.0.0.1:4318' + route, 
     compose('up', '-d', '--build', '--wait');
     assert.equal((await request('/api/health')).status, 200);
     assert.equal((await request('/api/homebase/export')).status, 401);
-    const login = await request('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, remember: true }) });
+    const login = await request('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password, remember: true, deviceName: 'Container smoke test' }) });
     assert.equal(login.status, 200);
     const cookie = login.headers.get('set-cookie').split(';')[0];
     const setup = await request('/api/setup', { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify({ title: 'Container persisted', profileName: 'Smoke test' }) });
