@@ -16,7 +16,7 @@ und gemerkten Geräten für die tägliche Nutzung als Browser-Startseite.
   Geräte abmelden. Offene Dashboards sperren sich beim nächsten aktiven Prüfintervall
   (zehn Sekunden); API-Zugriff wird sofort verweigert.
 - Ändern von ADMIN_PASSWORD und anschließender Neustart melden alle Geräte ab.
-- Ohne ausreichend langes Passwort startet der Server nicht. IP-Adressen und
+- Ohne gesetztes Passwort startet der Server nicht; eine Mindestlänge gibt es nicht. IP-Adressen und
   X-Forwarded-For erlauben niemals den Login zu umgehen.
 
 Zufällige 256-Bit-Sitzungstokens werden ausschließlich in HttpOnly-/Secure-/SameSite-
@@ -36,7 +36,7 @@ Für **Docker Standalone / Compose Stacks**. Diese Datei ist kein Docker-Swarm-S
 
 | Variable | Wert |
 | --- | --- |
-| ADMIN_PASSWORD | Eigenes zufälliges Passwort, mindestens 16 Zeichen |
+| ADMIN_PASSWORD | Eigenes Passwort; darf nicht leer sein, keine Mindestlänge |
 | APP_ORIGIN | https://start.wetterhahn.com |
 | DASH_PORT | 3000 oder ein freier Port deines Docker-Hosts |
 | SESSION_DAYS | 180 |

@@ -12,7 +12,7 @@ function createAuth({ directory, env = process.env }) {
   const password = env.ADMIN_PASSWORD_FILE
     ? fs.readFileSync(env.ADMIN_PASSWORD_FILE, 'utf8').trimEnd()
     : env.ADMIN_PASSWORD || '';
-  if (password.length < 16) throw new Error('ADMIN_PASSWORD must contain at least 16 characters.');
+  if (!password) throw new Error('ADMIN_PASSWORD must not be empty.');
   const days = Number(env.SESSION_DAYS || 180);
   if (!Number.isInteger(days) || days < 1 || days > 365) throw new Error('SESSION_DAYS must be between 1 and 365.');
   const digest = value => crypto.createHash('sha256').update(value).digest('hex');

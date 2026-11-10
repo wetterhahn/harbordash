@@ -1,7 +1,7 @@
 // CI integration test: real image, unprivileged user, read-only root, writable volume.
 const { execFileSync } = require('node:child_process');
 const assert = require('node:assert/strict');
-const password = 'ci-container-only-password-12345';
+const password = 'ci-test';
 const env = { ...process.env, ADMIN_PASSWORD: password, HARBORDASH_IMAGE: 'harbordash:smoke',
   DASH_PORT: '4318', DASH_BIND_IP: '127.0.0.1', DASH_VOLUME_NAME: 'harbordash_ci_data',
   APP_ORIGIN: 'https://start.wetterhahn.com' };

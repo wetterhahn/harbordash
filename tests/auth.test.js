@@ -49,15 +49,26 @@ function directory() {
   return value;
 }
 
-test('fails closed for missing password, short password, insecure origin and invalid duration', () => {
+test('fails closed for missing or empty password, insecure origin and invalid duration', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'harbordash-config-'));
   try {
-    for (const env of [{}, { ADMIN_PASSWORD: 'short', APP_ORIGIN: 'https://example.com' },
+    for (const env of [{}, { ADMIN_PASSWORD: '', APP_ORIGIN: 'https://example.com' },
       { ADMIN_PASSWORD: PASSWORD, APP_ORIGIN: 'http://example.com' },
       { ADMIN_PASSWORD: PASSWORD, APP_ORIGIN: 'https://example.com', SESSION_DAYS: '0' }]) {
       assert.throws(() => createAuth({ directory: dir, env }));
     }
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('single-character password supports login without opening unauthenticated access', async t => {
+  const dir = directory();
+  const app = await launch(t, dir, { ADMIN_PASSWORD: 'x' });
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  assert.equal((await app.request('/api/homebase/export')).status, 401);
+  const cookie = (await app.login()).split(';')[0];
+  assert.equal((await app.request('/api/homebase/export', { cookie })).status, 200);
+  const wrong = await app.request('/api/auth/login', { method: 'POST', body: { password: 'y', deviceName: 'Test' } });
+  assert.equal(wrong.status, 401);
 });
 
 test('all private endpoints protected from first boot; no metadata or IP bypass', async t => {
