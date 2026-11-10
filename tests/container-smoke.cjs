@@ -17,7 +17,8 @@ const request = (route, options) => fetch('http://127.0.0.1:4318' + route, optio
     const cookie = login.headers.get('set-cookie').split(';')[0];
     const setup = await request('/api/setup', { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify({ title: 'Container persisted', profileName: 'Smoke test' }) });
     assert.equal(setup.status, 200);
-    compose('restart', '--wait');
+    compose('restart');
+    compose('up', '-d', '--wait');
     const response = await request('/api/homebase', { headers: { Cookie: cookie } });
     const data = await response.json();
     assert.equal(data.auth.authenticated, true);
