@@ -37,7 +37,7 @@ Für **Docker Standalone / Compose Stacks**. Diese Datei ist kein Docker-Swarm-S
 | Variable | Wert |
 | --- | --- |
 | ADMIN_PASSWORD | Eigenes zufälliges Passwort, mindestens 16 Zeichen |
-| APP_ORIGIN | https://dash.wetterhahn.com |
+| APP_ORIGIN | https://start.wetterhahn.com |
 | DASH_PORT | 3000 oder ein freier Port deines Docker-Hosts |
 | SESSION_DAYS | 180 |
 | DASH_VOLUME_NAME | harbordash_data |
@@ -47,15 +47,15 @@ Für **Docker Standalone / Compose Stacks**. Diese Datei ist kein Docker-Swarm-S
    Deployment abgeschlossen sein. Falls GHCR das Paket noch als privat führt:
    GitHub → Profil → Packages → harbordash → Package settings → Change visibility
    → Public. Ein öffentliches Repository garantiert allein kein öffentliches Paket.
-4. Im DNS dash.wetterhahn.com auf deinen bestehenden NPM-Zugang zeigen lassen.
+4. Im DNS start.wetterhahn.com auf deinen bestehenden NPM-Zugang zeigen lassen.
 5. In Nginx Proxy Manager einen **Proxy Host** anlegen:
-   - Domain Names: dash.wetterhahn.com
+   - Domain Names: start.wetterhahn.com
    - Scheme: **http** (Verbindung NPM → Dashboard)
    - Forward Hostname / IP: LAN-IP deines Docker-Hosts
    - Forward Port: Wert aus DASH_PORT, standardmäßig **3000**
    - Cache Assets: **aus**
    - SSL: Let's-Encrypt-Zertifikat anfordern, **Force SSL** einschalten.
-6. https://dash.wetterhahn.com öffnen, anmelden, Gerät merken und Dashboard einrichten.
+6. https://start.wetterhahn.com öffnen, anmelden, Gerät merken und Dashboard einrichten.
    Diese HTTPS-Adresse als Browser-Startseite verwenden, auch im Heimnetz.
 
 Am Router nur die vorhandenen NPM-Ports weiterleiten. **Port 3000 nicht ins Internet

@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const password = 'ci-container-only-password-12345';
 const env = { ...process.env, ADMIN_PASSWORD: password, HARBORDASH_IMAGE: 'harbordash:smoke',
   DASH_PORT: '4318', DASH_BIND_IP: '127.0.0.1', DASH_VOLUME_NAME: 'harbordash_ci_data',
-  APP_ORIGIN: 'https://dash.wetterhahn.com' };
+  APP_ORIGIN: 'https://start.wetterhahn.com' };
 const compose = (...args) => execFileSync('docker', ['compose', '-p', 'harbordash_ci', '-f', 'docker-compose.yml', '-f', 'docker-compose.build.yml', ...args], { env, stdio: 'inherit' });
 // Compose commands block this test's event loop; do not reuse sockets across a restart.
 const request = (route, options = {}) => fetch('http://127.0.0.1:4318' + route, {

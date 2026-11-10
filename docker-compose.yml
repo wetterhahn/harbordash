@@ -9,7 +9,7 @@ services:
       PORT: 3000
       HOST: 0.0.0.0
       DATA_DIR: /data
-      APP_ORIGIN: ${APP_ORIGIN:-https://dash.wetterhahn.com}
+      APP_ORIGIN: ${APP_ORIGIN:-https://start.wetterhahn.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD to a unique password with at least 16 characters}
       SESSION_DAYS: ${SESSION_DAYS:-180}
       HOMEBASE_STATUS_TARGETS: ${HOMEBASE_STATUS_TARGETS:-[]}

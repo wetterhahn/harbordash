@@ -17,7 +17,7 @@ async function launch(t, directory, extra = {}) {
   await new Promise(resolve => reserve.close(resolve));
   const child = spawn(process.execPath, [path.join(__dirname, '../server.js')], {
     env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), DATA_DIR: directory,
-      ADMIN_PASSWORD: PASSWORD, APP_ORIGIN: 'https://dash.wetterhahn.com', ALLOW_INSECURE_HTTP: 'false', ...extra },
+      ADMIN_PASSWORD: PASSWORD, APP_ORIGIN: 'https://start.wetterhahn.com', ALLOW_INSECURE_HTTP: 'false', ...extra },
     stdio: ['ignore', 'pipe', 'pipe']
   });
   const stop = async () => {
@@ -149,7 +149,7 @@ test('expired sessions rejected, cross-origin writes blocked, spoofing cannot by
     assert.equal((await app.request('/api/setup', { method: 'POST', body: {}, cookie, headers })).status, 403);
   }
   assert.equal((await app.request('/api/setup', { method: 'POST', body: {}, cookie, headers: { 'Content-Type': 'text/plain' } })).status, 415);
-  assert.equal((await app.request('/api/setup', { method: 'POST', body: { title: 'Allowed' }, cookie, headers: { Origin: 'https://dash.wetterhahn.com' } })).status, 200);
+  assert.equal((await app.request('/api/setup', { method: 'POST', body: { title: 'Allowed' }, cookie, headers: { Origin: 'https://start.wetterhahn.com' } })).status, 200);
   await app.stop();
   const file = path.join(dir, 'sessions.json');
   const stored = JSON.parse(fs.readFileSync(file));
