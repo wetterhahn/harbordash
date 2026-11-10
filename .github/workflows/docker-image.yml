@@ -31,6 +31,9 @@ jobs:
       - name: Test authentication and dashboard
         run: node --test tests/*.test.js
 
+      - name: Test hardened Compose stack and restart persistence
+        run: node tests/container-smoke.cjs
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 

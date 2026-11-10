@@ -136,7 +136,9 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 Die Tests prüfen Zugriffsschutz ab dem ersten Start, Cookies, Neustart-Persistenz,
 Sitzungsablauf, Gerätewiderruf, Passwortwechsel, CSRF-Prüfungen, Login-Drosselung,
-parallele Dashboard-Änderungen und Favicon-Aktualisierung. Zehn Fehlversuche pro
+parallele Dashboard-Änderungen und Favicon-Aktualisierung. GitHub Actions startet
+zusätzlich den echten Compose-Stack und prüft Anmeldung, Schreibrechte und
+Sitzungserhalt nach einem Container-Neustart. Zehn Fehlversuche pro
 Socket-Gegenstelle sperren weitere Versuche bis zum Ende des 15-Minuten-Fensters.
 Hinter NPM teilen sich Browser dieses Limit; Forwarded-Header werden absichtlich
 nicht vertraut. Bestehende Sitzungen sind davon nicht betroffen.
