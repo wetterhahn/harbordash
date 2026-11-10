@@ -6,7 +6,10 @@ const env = { ...process.env, ADMIN_PASSWORD: password, HARBORDASH_IMAGE: 'harbo
   DASH_PORT: '4318', DASH_BIND_IP: '127.0.0.1', DASH_VOLUME_NAME: 'harbordash_ci_data',
   APP_ORIGIN: 'https://dash.wetterhahn.com' };
 const compose = (...args) => execFileSync('docker', ['compose', '-p', 'harbordash_ci', '-f', 'docker-compose.yml', '-f', 'docker-compose.build.yml', ...args], { env, stdio: 'inherit' });
-const request = (route, options) => fetch('http://127.0.0.1:4318' + route, options);
+// Compose commands block this test's event loop; do not reuse sockets across a restart.
+const request = (route, options = {}) => fetch('http://127.0.0.1:4318' + route, {
+  ...options, headers: { ...options.headers, Connection: 'close' }
+});
 (async () => {
   try {
     compose('up', '-d', '--build', '--wait');
