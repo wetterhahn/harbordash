@@ -118,7 +118,7 @@ test("shared edits and favicon refresh", async (t) => {
   assert.deepEqual((await favicon(`${fixtureUrl}/a`)).bytes, icon);
   available = false;
   const fallback = await favicon(`${fixtureUrl}/missing`);
-  assert.equal(fallback.headers.get("cache-control"), "public, max-age=86400");
+  assert.equal(fallback.headers.get("cache-control"), "private, no-store");
   available = true;
   assert.deepEqual((await favicon(`${fixtureUrl}/missing`)).bytes, fallback.bytes);
   const missingKey = crypto.createHash("sha256").update(`${fixtureUrl}/missing`).digest("hex");

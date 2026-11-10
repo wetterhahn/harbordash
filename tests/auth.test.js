@@ -34,7 +34,7 @@ async function launch(t, directory, extra = {}) {
   });
   const request = (endpoint, { method = 'GET', body, cookie, headers = {} } = {}) => fetch(`http://127.0.0.1:${port}${endpoint}`, {
     method, headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(cookie ? { Cookie: cookie } : {}), ...headers },
-    body: body === undefined ? undefined : JSON.stringify(body)
+    body: body === undefined ? undefined : Buffer.isBuffer(body) ? body : JSON.stringify(body)
   });
   const login = async (remember = true, cookie) => {
     const response = await request('/api/auth/login', { method: 'POST', body: { password: extra.ADMIN_PASSWORD || PASSWORD, remember, deviceName: 'Test browser' }, cookie });
@@ -84,6 +84,16 @@ test('all private endpoints protected from first boot; no metadata or IP bypass'
   assert.equal(data.auth.authenticated, false);
   assert.deepEqual(data.profiles, []);
   assert.equal(data.revision, '');
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aZ1sAAAAASUVORK5CYII=', 'base64');
+  const uploaded = await app.request('/api/background-images', { method: 'POST', cookie, body: png, headers: { 'Content-Type': 'image/png', 'X-File-Name': 'private.png' } });
+  assert.equal(uploaded.status, 200);
+  const imageUrl = (await uploaded.json()).appearance.backgroundImages[0].url;
+  const image = await app.request(imageUrl, { cookie });
+  assert.equal(image.status, 200);
+  assert.equal(image.headers.get('cache-control'), 'private, no-store');
+  assert.equal((await app.request(imageUrl)).status, 401);
+  const favicon = await app.request('/api/favicon?url=invalid', { cookie });
+  assert.equal(favicon.headers.get('cache-control'), 'private, no-store');
   const saved = JSON.parse(fs.readFileSync(path.join(dir, 'homebase.json')));
   saved.admin.allowedIps = ['127.0.0.1'];
   fs.writeFileSync(path.join(dir, 'homebase.json'), JSON.stringify(saved));

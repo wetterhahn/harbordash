@@ -668,7 +668,7 @@ function sendFaviconFallback(res) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#160b27"/><path d="M14 44h36M18 20h28M20 32h24" stroke="#26f4ff" stroke-width="5" stroke-linecap="round"/><path d="M14 44h36M18 20h28M20 32h24" stroke="#ff3df2" stroke-width="2" stroke-linecap="round"/></svg>`;
   res.writeHead(200, {
     "Content-Type": "image/svg+xml; charset=utf-8",
-    "Cache-Control": "public, max-age=86400"
+    "Cache-Control": "private, no-store"
   });
   res.end(svg);
 }
@@ -717,7 +717,7 @@ async function serveFavicon(res, targetUrl) {
     sendFaviconFallback(res);
     return;
   }
-  res.writeHead(200, { "Content-Type": cached.meta.contentType || "image/x-icon", "Cache-Control": "public, max-age=86400" });
+  res.writeHead(200, { "Content-Type": cached.meta.contentType || "image/x-icon", "Cache-Control": "private, no-store" });
   fs.createReadStream(cached.cacheFile).pipe(res);
 }
 
@@ -745,7 +745,7 @@ function serveBackgroundImage(res) {
   }
   res.writeHead(200, {
     "Content-Type": contentTypeForExtension(path.extname(file)),
-    "Cache-Control": "no-cache"
+    "Cache-Control": "private, no-store"
   });
   fs.createReadStream(file).pipe(res);
 }
@@ -763,7 +763,7 @@ function serveBackgroundGalleryImage(res, requestPath) {
   }
   res.writeHead(200, {
     "Content-Type": contentTypeForExtension(path.extname(file)),
-    "Cache-Control": "public, max-age=604800"
+    "Cache-Control": "private, no-store"
   });
   fs.createReadStream(file).pipe(res);
 }
