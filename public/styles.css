@@ -2352,3 +2352,26 @@ dialog::backdrop {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* HarborDash private entry and remembered devices */
+#loginDialog { width: min(460px, calc(100% - 32px)); padding: 0; border: 1px solid rgba(115, 214, 195, .24); border-radius: 24px; background: #141e27; color: #edf5f7; box-shadow: 0 32px 120px #0009; }
+#loginDialog::backdrop { background: radial-gradient(ellipse at 20% 15%, #193b40, #0b121a 70%); opacity: 1; }
+#loginDialog .login-card { padding: 36px; display: grid; gap: 16px; background: transparent; }
+.login-mark { width: 72px; height: 54px; display: grid; place-content: center; grid-auto-flow: column; align-items: center; border: 1px solid #497c76; border-radius: 15px; font-weight: 750; color: #93e3d0; letter-spacing: -2px; }
+.login-mark span { color: #547a7a; padding: 0 5px; }
+.login-eyebrow { font-size: 10px; letter-spacing: .18em; color: #8da7b2; margin: 6px 0 0; }
+#loginTitle { font-size: clamp(24px, 6vw, 32px); margin: 0; letter-spacing: -.04em; }
+.login-copy { margin: -6px 0 8px; color: #a0b2be; font-size: 14px; }
+#loginDialog input:not([type=checkbox]) { background: #0f1820; border-color: #344651; color: #edf5f7; border-radius: 10px; min-height: 46px; }
+.login-optional, .login-hint, .login-footer { color: #91a7b3; font-size: 12px; font-weight: 400; }
+#loginDialog .remember-device { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.remember-device input { width: 18px; height: 18px; accent-color: #7bd6bd; }
+.login-hint { margin: -6px 0 0; line-height: 1.6; }
+#loginButton { background: #91e2cb; color: #102823; border: 0; border-radius: 10px; min-height: 48px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+#loginButton:disabled { opacity: .6; cursor: wait; }
+.login-error { color: #ff9da3; font-size: 13px; margin: 0; }
+.login-footer { text-align: center; margin: 6px 0 0; font-size: 11px; }
+.device-row { display: flex; gap: 16px; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding: 16px 0; }
+.device-row > div { min-width: 0; overflow-wrap: anywhere; }
+.device-row small { display: block; color: var(--muted); margin-top: 6px; }
+@media (max-width: 480px) { #loginDialog .login-card { padding: 26px; } .device-row { align-items: start; flex-direction: column; } }

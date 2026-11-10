@@ -20,7 +20,7 @@ test("shared edits and favicon refresh", async (t) => {
   const port = reserve.address().port;
   await new Promise((resolve) => reserve.close(resolve));
   const child = spawn(process.execPath, [path.join(__dirname, "../server.js")], {
-    env: { ...process.env, HOST: "127.0.0.1", PORT: String(port), DATA_DIR: directory, ADMIN_PASSWORD: "" },
+    env: { ...process.env, HOST: "127.0.0.1", PORT: String(port), DATA_DIR: directory, ADMIN_PASSWORD: "test-password-only-12345", ALLOW_INSECURE_HTTP: "true", APP_ORIGIN: "" },
     stdio: ["ignore", "pipe", "pipe"]
   });
   t.after(async () => {
@@ -30,13 +30,19 @@ test("shared edits and favicon refresh", async (t) => {
     fs.rmSync(directory, { recursive: true, force: true });
   });
   await new Promise((resolve, reject) => {
-    child.stdout.on("data", (data) => { if (String(data).includes("Homebase running")) resolve(); });
+    child.stdout.on("data", (data) => { if (String(data).includes("HarborDash running")) resolve(); });
     child.once("error", reject);
     child.once("exit", (code) => reject(new Error(`server exited: ${code}`)));
   });
+  const login = await fetch('http://127.0.0.1:' + port + '/api/auth/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: 'test-password-only-12345', remember: true })
+  });
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get('set-cookie').split(';')[0];
   const api = async (endpoint = "/api/homebase", method = "GET", body) => {
     const response = await fetch(`http://127.0.0.1:${port}${endpoint}`, {
-      method, headers: { "Content-Type": "application/json" }, body: body && JSON.stringify(body)
+      method, headers: { "Content-Type": "application/json", Cookie: cookie }, body: body && JSON.stringify(body)
     });
     return { status: response.status, data: await response.json() };
   };
@@ -99,7 +105,7 @@ test("shared edits and favicon refresh", async (t) => {
     } else { res.writeHead(404); res.end(); }
   });
   const favicon = async (target) => {
-    const response = await fetch(`http://127.0.0.1:${port}/api/favicon?url=${encodeURIComponent(target)}`);
+    const response = await fetch(`http://127.0.0.1:${port}/api/favicon?url=${encodeURIComponent(target)}`, { headers: { Cookie: cookie } });
     return { headers: response.headers, bytes: Buffer.from(await response.arrayBuffer()) };
   };
   const fetched = await favicon(`${fixtureUrl}/a`);

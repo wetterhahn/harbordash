@@ -2,3 +2,9 @@ data/
 node_modules/
 .DS_Store
 npm-debug.log*
+
+.env
+.env.*
+!.env.example
+sessions.json
+auth-salt

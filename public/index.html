@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#150829" />
-    <title>Homebase</title>
+    <meta name="theme-color" content="#141e27" />
+    <title>HarborDash</title>
     <link rel="stylesheet" href="/styles.css?v=product20" />
   </head>
   <body>
@@ -13,7 +13,7 @@
     <main class="shell">
       <section class="topbar">
         <div class="brand-block">
-          <h1 id="pageTitle">Homebase</h1>
+          <h1 id="pageTitle">HarborDash</h1>
           <p id="pageSubtitle"></p>
         </div>
         <div class="topbar-cards">
@@ -93,7 +93,7 @@
           <header>
             <div>
               <p>Einstellungen</p>
-              <h2>Homebase anpassen</h2>
+              <h2>HarborDash anpassen</h2>
             </div>
             <button id="closeSettingsButton" type="button">Zurück</button>
           </header>
@@ -211,11 +211,9 @@
             </div>
           </div>
           <div class="settings-options auth-settings" aria-label="Zugriffsschutz">
-            <p class="settings-help">Ohne IP-Liste ist Homebase frei. Sobald eine IP eingetragen ist, gilt IP oder Server-Passwort aus ADMIN_PASSWORD.</p>
-            <label>
-              IPs ohne Login
-              <textarea id="settingAllowedIps" rows="3" placeholder="192.168.1.10&#10;192.168.1.20"></textarea>
-            </label>
+            <p class="settings-help">Dein Dashboard ist immer durch einen Login geschützt. Gemerkte Geräte bleiben auch nach Updates angemeldet.</p>
+            <textarea id="settingAllowedIps" hidden aria-hidden="true"></textarea>
+            <button id="devicesButton" class="subtle-button" type="button">Angemeldete Geräte verwalten</button>
             <button id="logoutButton" class="subtle-button" type="button">Abmelden</button>
           </div>
           <div class="settings-actions" aria-label="Verwaltung">
@@ -240,11 +238,11 @@
     <dialog id="setupDialog">
       <form method="dialog" class="dialog-card" id="setupForm">
         <header>
-          <h2>Homebase einrichten</h2>
+          <h2>HarborDash einrichten</h2>
         </header>
         <label>
           Seitentitel
-          <input id="setupTitle" required maxlength="80" value="Homebase" />
+          <input id="setupTitle" required maxlength="80" value="HarborDash" />
         </label>
         <label>
           Erstes Profil
@@ -354,22 +352,34 @@
       </form>
     </dialog>
 
-    <dialog id="loginDialog">
-      <form method="dialog" class="dialog-card" id="loginForm">
-        <header>
-          <h2>Login</h2>
-        </header>
-        <label>
-          Server-Passwort
-          <input id="loginPassword" type="password" autocomplete="current-password" required />
+    <dialog id="loginDialog" aria-labelledby="loginTitle">
+      <form class="dialog-card login-card" id="loginForm">
+        <div class="login-mark" aria-hidden="true">H<span> / </span>D</div>
+        <p class="login-eyebrow">DEIN PERSÖNLICHER STARTPUNKT</p>
+        <h2 id="loginTitle">Willkommen an Bord.</h2>
+        <p class="login-copy">Alles, was du brauchst. Nur für dich.</p>
+        <input type="text" name="username" value="owner" autocomplete="username" hidden />
+        <label>Dein Passwort
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" required maxlength="1024" placeholder="Dashboard entsperren" />
         </label>
-        <footer>
-          <span></span>
-          <span></span>
-          <span></span>
-          <button class="primary" id="loginButton" value="default" type="button">Einloggen</button>
-        </footer>
+        <label>Gerätename <span class="login-optional">(optional)</span>
+          <input id="loginDeviceName" maxlength="80" placeholder="z. B. Mein Laptop" autocomplete="off" />
+        </label>
+        <label class="remember-device"><input id="loginRemember" type="checkbox" checked /> Dieses Gerät merken</label>
+        <p class="login-hint" id="rememberHint">180 Tage angemeldet bleiben. Auf gemeinsam genutzten Geräten ausschalten.</p>
+        <p id="loginError" role="alert" class="login-error" hidden></p>
+        <button class="primary" id="loginButton" type="submit">Dashboard öffnen <span aria-hidden="true">↗</span></button>
+        <p class="login-footer">HarborDash · Dein sicherer Heimathafen</p>
       </form>
+    </dialog>
+
+    <dialog id="devicesDialog" aria-labelledby="devicesTitle">
+      <div class="dialog-card">
+        <header><h2 id="devicesTitle">Deine Geräte</h2><button id="closeDevicesButton" type="button" aria-label="Schließen">×</button></header>
+        <p class="settings-help">Melde Geräte ab, die du nicht mehr nutzt oder verloren hast.</p>
+        <div id="deviceList" aria-live="polite"></div>
+        <button id="revokeOthersButton" type="button">Alle anderen Geräte abmelden</button>
+      </div>
     </dialog>
 
     <dialog id="categoriesDialog">

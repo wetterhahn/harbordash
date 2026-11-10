@@ -1,4 +1,3 @@
 services:
-  homebase:
+  harbordash:
     build: .
-    image: ${HOMEBASE_IMAGE:-ghcr.io/sandavdesigns/homebase:local}

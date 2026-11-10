@@ -45,7 +45,7 @@ test("server refreshes stored icons without browser requests", async (t) => {
       links: urls.map((url, index) => ({ id: String(index), title: "Test", url, category: "Links" })) }]
   }));
   const child = spawn(process.execPath, [path.join(__dirname, "../server.js")], {
-    env: { ...process.env, HOST: "127.0.0.1", PORT: "0", DATA_DIR: directory, ADMIN_PASSWORD: "" },
+    env: { ...process.env, HOST: "127.0.0.1", PORT: "0", DATA_DIR: directory, ADMIN_PASSWORD: "test-password-only-12345", ALLOW_INSECURE_HTTP: "true", APP_ORIGIN: "" },
     stdio: ["ignore", "pipe", "pipe"]
   });
   t.after(async () => {
@@ -55,7 +55,7 @@ test("server refreshes stored icons without browser requests", async (t) => {
     fs.rmSync(directory, { recursive: true, force: true });
   });
   await new Promise((resolve, reject) => {
-    child.stdout.on("data", (data) => { if (String(data).includes("Homebase running")) resolve(); });
+    child.stdout.on("data", (data) => { if (String(data).includes("HarborDash running")) resolve(); });
     child.once("error", reject);
     child.once("exit", (code) => reject(new Error(`server exited: ${code}`)));
   });

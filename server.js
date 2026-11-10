@@ -15,9 +15,9 @@ const faviconRequests = new Map();
 let faviconMaintenanceRunning = false;
 const BACKGROUND_DIR = path.join(DATA_DIR, "background");
 const PUBLIC_DIR = path.join(__dirname, "public");
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const STATUS_TARGETS = parseStatusTargets(process.env.HOMEBASE_STATUS_TARGETS || "[]");
-const sessions = new Map();
+const { createAuth } = require("./auth");
+const auth = createAuth({ directory: DATA_DIR });
 const categoryColors = ["#35f0ff", "#56ff8f", "#ffb238", "#ff4f7a", "#c471ff", "#4aa8ff", "#ff6f3c"];
 
 const defaultCategories = [
@@ -33,9 +33,9 @@ const defaultCategories = [
 const defaultData = {
   schemaVersion: 5,
   setupComplete: false,
-  title: "Homebase",
+  title: "HarborDash",
   subtitle: "Deine Startseite fuer Links, Profile und kleine Widgets",
-  theme: "retro",
+  theme: "dark",
   appearance: {
     backgroundImage: "",
     backgroundImages: [],
@@ -492,15 +492,7 @@ function normalizePreferences(preferences) {
 }
 
 function normalizeAdmin(admin) {
-  const allowedIps = Array.isArray(admin?.allowedIps)
-    ? admin.allowedIps
-    : String(admin?.allowedIps || "").split(/[\n,;]/);
-  return {
-    allowedIps: allowedIps
-      .map((ip) => normalizeIpToken(ip))
-      .filter(Boolean)
-      .slice(0, 80)
-  };
+  return { allowedIps: [] };
 }
 
 function normalizeStatusWidget(widget, fallbackUrl = "") {
@@ -609,53 +601,12 @@ function sendJson(res, status, payload) {
   res.end(body);
 }
 
-function parseCookies(req) {
-  return Object.fromEntries(
-    String(req.headers.cookie || "")
-      .split(";")
-      .map((cookie) => cookie.trim().split("="))
-      .filter(([key, value]) => key && value)
-  );
-}
-
-function isAuthed(req) {
-  const data = readDataWithoutMigration();
-  if (!isAuthEnabled(data)) return true;
-  if (isAllowedIp(req, data.admin)) return true;
-  const sessionId = parseCookies(req).homebase_session;
-  const session = sessionId ? sessions.get(sessionId) : null;
-  if (!session) return false;
-  if (session.expiresAt <= Date.now()) {
-    sessions.delete(sessionId);
-    return false;
-  }
-  return true;
-}
+function isAuthed(req) { return auth.authenticated(req); }
 
 function requireAuth(req, res) {
   if (isAuthed(req)) return true;
   sendJson(res, 401, { error: "Login erforderlich" });
   return false;
-}
-
-function readDataWithoutMigration() {
-  ensureDataFile();
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-}
-
-function verifyPassword(password) {
-  if (!ADMIN_PASSWORD) return false;
-  const provided = Buffer.from(String(password || ""));
-  const expected = Buffer.from(String(ADMIN_PASSWORD));
-  return provided.length === expected.length && crypto.timingSafeEqual(provided, expected);
-}
-
-function setSessionCookie(res, sessionId) {
-  res.setHeader("Set-Cookie", `homebase_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
-}
-
-function clearSessionCookie(res) {
-  res.setHeader("Set-Cookie", "homebase_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
 }
 
 function toPublicData(data, req) {
@@ -668,59 +619,24 @@ function toPublicData(data, req) {
     admin: {
       allowedIps: authenticated ? data.admin?.allowedIps || [] : [],
       enabled: authEnabled,
-      hasPassword: Boolean(ADMIN_PASSWORD)
+      hasPassword: true
     },
     auth: {
       enabled: authEnabled,
       authenticated,
+      rememberDays: auth.days,
       ipAllowed: authEnabled ? isAllowedIp(req, data.admin) : true
     }
   };
 }
 
-function isAuthEnabled(data) {
-  return getAllowedIpRules(data.admin).length > 0;
-}
+function isAuthEnabled() { return true; }
+function isAllowedIp() { return false; }
 
-function getClientIp(req) {
-  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  const raw = forwarded || req.socket.remoteAddress || "";
-  return normalizeIpToken(raw.replace(/^::ffff:/, ""));
-}
-
-function normalizeIpToken(value) {
-  const ip = String(value || "").trim().replace(/^::ffff:/, "");
-  if (!ip) return "";
-  if (ip === "::1") return "127.0.0.1";
-  return ip;
-}
-
-function getAllowedIpRules(admin) {
-  return Array.isArray(admin?.allowedIps) ? admin.allowedIps.map(normalizeIpToken).filter(Boolean) : [];
-}
-
-function isAllowedIp(req, admin) {
-  const allowedIps = getAllowedIpRules(admin);
-  if (!allowedIps.length) return false;
-  const clientIp = getClientIp(req);
-  return allowedIps.includes(clientIp);
-}
-
-function createLockedData(data) {
+function createLockedData() {
   return {
-    schemaVersion: data.schemaVersion || 5,
-    setupComplete: data.setupComplete !== false,
-    title: data.title || "Homebase",
-    subtitle: "Login erforderlich",
-    theme: data.theme || "retro",
-    appearance: data.appearance || defaultData.appearance,
-    activeProfileId: "",
-    widgets: { clock: true, notes: [], googleSearch: false, statusOverview: false, linkStats: false, weather: { enabled: false } },
-    preferences: data.preferences || defaultData.preferences,
-    profiles: [],
-    categories: [],
-    links: [],
-    status: { configured: 0, updatedAt: "", items: [] }
+    ...defaultData, setupComplete: true, title: "HarborDash", subtitle: "Dein persönlicher Startpunkt.",
+    theme: "dark", activeProfileId: "", profiles: [], categories: [], links: []
   };
 }
 
@@ -1336,7 +1252,7 @@ async function readUnraidStatus(target, base) {
   const response = await requestJsonPost(new URL(target.statusPath || "/graphql", target.url).href, {
     headers: { "x-api-key": target.apiKey },
     body: {
-      query: `query HomebaseStatus {
+      query: `query HarborDashStatus {
         info {
           os { distro release uptime }
           cpu { cores threads }
@@ -2175,7 +2091,7 @@ function requestJsonPost(targetUrl, { headers = {}, body = {} } = {}) {
           Accept: "application/json,*/*",
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(payload),
-          "User-Agent": "Homebase/1.0",
+          "User-Agent": "HarborDash/1.0",
           ...headers
         },
         rejectUnauthorized: false,
@@ -2217,7 +2133,7 @@ function requestBuffer(targetUrl, { accept, limit, headers = {}, timeout = 5000,
     const request = transport.request(
       parsed,
       {
-        headers: { Accept: accept, "User-Agent": "Homebase/1.0", ...headers },
+        headers: { Accept: accept, "User-Agent": "HarborDash/1.0", ...headers },
         rejectUnauthorized: false,
         timeout,
         ...requestOptions
@@ -2272,7 +2188,7 @@ function requestText(targetUrl, { accept, limit, headers = {} }) {
     const request = transport.request(
       parsed,
       {
-        headers: { Accept: accept, "User-Agent": "Homebase/1.0", ...headers },
+        headers: { Accept: accept, "User-Agent": "HarborDash/1.0", ...headers },
         rejectUnauthorized: false,
         timeout: 5000
       },
@@ -2329,7 +2245,7 @@ function requestHead(targetUrl, headers = {}) {
       parsed,
       {
         method: "HEAD",
-        headers: { "User-Agent": "Homebase/1.0", ...headers },
+        headers: { "User-Agent": "HarborDash/1.0", ...headers },
         rejectUnauthorized: false,
         timeout: 5000
       },
@@ -2396,7 +2312,7 @@ function serveStatic(req, res) {
   const safePath = path.normalize(requestPath).replace(/^(\.\.[/\\])+/, "");
   const filePath = path.join(PUBLIC_DIR, safePath === "/" ? "index.html" : safePath);
 
-  if (!filePath.startsWith(PUBLIC_DIR)) {
+  if (path.relative(PUBLIC_DIR, filePath).startsWith("..") || path.isAbsolute(path.relative(PUBLIC_DIR, filePath))) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
@@ -2426,9 +2342,13 @@ function serveStatic(req, res) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-
   try {
+    if (!auth.guard(req, res)) return;
+    const url = new URL(req.url, 'http://localhost');
+    const publicRoutes = new Set(['/api/health', '/api/auth/status', '/api/auth/login', '/api/homebase']);
+    const publicRead = req.method === 'GET' && publicRoutes.has(url.pathname);
+    const publicLogin = req.method === 'POST' && url.pathname === '/api/auth/login';
+    if (url.pathname.startsWith('/api/') && !publicRead && !publicLogin && !requireAuth(req, res)) return;
     if (url.pathname === "/api/health") {
       sendJson(res, 200, { ok: true });
       return;
@@ -2456,6 +2376,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === "/api/setup" && req.method === "POST") {
+      if (!requireAuth(req, res)) return;
       const current = readData();
       if (current.setupComplete && isAuthEnabled(current) && !isAuthed(req)) {
         sendJson(res, 409, { error: "Setup already completed" });
@@ -2503,27 +2424,24 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/api/auth/login" && req.method === "POST") {
       const body = JSON.parse(await readRequestBody(req));
-      const data = readData();
-      const enabled = isAuthEnabled(data);
-      if (!enabled || verifyPassword(body.password)) {
-        const sessionId = crypto.randomUUID();
-        sessions.set(sessionId, { expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
-        setSessionCookie(res, sessionId);
-        sendJson(res, 200, { enabled, authenticated: true, ipAllowed: isAllowedIp(req, data.admin) });
-        return;
-      }
-      sendJson(res, 401, { error: "Invalid password" });
+      if (auth.login(req, res, body)) sendJson(res, 200, { enabled: true, authenticated: true, ipAllowed: false });
       return;
     }
 
     if (url.pathname === "/api/auth/logout" && req.method === "POST") {
-      const sessionId = parseCookies(req).homebase_session;
-      if (sessionId) sessions.delete(sessionId);
-      clearSessionCookie(res);
-      const data = readData();
-      const enabled = isAuthEnabled(data);
-      const ipAllowed = enabled ? isAllowedIp(req, data.admin) : true;
-      sendJson(res, 200, { enabled, authenticated: !enabled || ipAllowed, ipAllowed });
+      auth.logout(req, res);
+      sendJson(res, 200, { enabled: true, authenticated: false, ipAllowed: false });
+      return;
+    }
+
+    if (url.pathname === "/api/auth/sessions" && req.method === "GET") {
+      sendJson(res, 200, { days: auth.days, sessions: auth.list(req) });
+      return;
+    }
+
+    if (url.pathname === "/api/auth/sessions" && req.method === "DELETE") {
+      auth.revoke(req, res, url.searchParams.get('id'));
+      sendJson(res, 200, { ok: true });
       return;
     }
 
@@ -2639,7 +2557,7 @@ const server = http.createServer(async (req, res) => {
 
 ensureDataFile();
 server.listen(PORT, HOST, () => {
-  console.log(`Homebase running on http://${HOST}:${PORT}`);
+  console.log(`HarborDash running on http://${HOST}:${PORT}`);
   setTimeout(refreshStoredFavicons, 1000).unref();
   setInterval(refreshStoredFavicons, 60 * 60 * 1000).unref();
 });

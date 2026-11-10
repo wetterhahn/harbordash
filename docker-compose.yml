@@ -1,18 +1,34 @@
 services:
-  homebase:
-    image: ${HOMEBASE_IMAGE:-ghcr.io/sandavdesigns/homebase:latest}
+  harbordash:
+    image: ${HARBORDASH_IMAGE:-ghcr.io/wetterhahn/harbordash:latest}
     restart: unless-stopped
+    init: true
     ports:
-      - "${HOMEBASE_PORT:-3000}:${HOMEBASE_INTERNAL_PORT:-3000}"
+      - "${DASH_BIND_IP:-0.0.0.0}:${DASH_PORT:-3000}:3000"
     environment:
-      PORT: ${HOMEBASE_INTERNAL_PORT:-3000}
+      PORT: 3000
       HOST: 0.0.0.0
       DATA_DIR: /data
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      APP_ORIGIN: ${APP_ORIGIN:-https://dash.wetterhahn.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD to a unique password with at least 16 characters}
+      SESSION_DAYS: ${SESSION_DAYS:-180}
       HOMEBASE_STATUS_TARGETS: ${HOMEBASE_STATUS_TARGETS:-[]}
     volumes:
-      - homebase_data:/data
+      - harbordash_data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
 volumes:
-  homebase_data:
-    name: ${HOMEBASE_VOLUME_NAME:-homebase_data}
+  harbordash_data:
+    name: ${DASH_VOLUME_NAME:-harbordash_data}

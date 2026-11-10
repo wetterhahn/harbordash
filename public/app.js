@@ -1,6 +1,6 @@
 const state = {
   setupComplete: true,
-  title: "Homebase",
+  title: "HarborDash",
   subtitle: "",
   theme: "retro",
   appearance: { backgroundImage: "", backgroundImages: [], backgroundOpacity: 0.35, backgroundInterval: 30, linkTransparency: 72, categoryTransparency: 58 },
@@ -231,7 +231,7 @@ async function loadData() {
   acceptServerData(await response.json());
   syncActiveProfileAliases();
   render();
-  if (!state.setupComplete) elements.setupDialog.showModal();
+  if (!state.setupComplete && state.auth?.authenticated && !elements.setupDialog.open) elements.setupDialog.showModal();
   if (state.auth?.enabled && !state.auth.authenticated) openLoginDialog();
   loadStatus().catch(() => {});
   loadWeather().catch(() => {});
@@ -351,7 +351,7 @@ function syncProfileFromAliases() {
 }
 
 function render() {
-  document.title = state.title || "Homebase";
+  document.title = state.title || "HarborDash";
   document.body.dataset.theme = state.theme || "retro";
   renderAppearance();
   elements.title.textContent = state.title;
@@ -1221,6 +1221,7 @@ function openSettingsPage() {
   elements.settingWeatherLatitude.value = state.widgets?.weather?.latitude || "";
   elements.settingWeatherLongitude.value = state.widgets?.weather?.longitude || "";
   elements.settingAllowedIps.value = (Array.isArray(state.admin?.allowedIps) ? state.admin.allowedIps : []).join("\n");
+  document.querySelector('#devicesButton').hidden = !state.auth?.authenticated;
   elements.logoutButton.hidden = !(state.auth?.enabled && state.auth.authenticated);
   renderWeatherSettings();
   renderLayoutSettings();
@@ -1236,7 +1237,9 @@ function closeSettingsPage() {
 
 function openLoginDialog() {
   if (elements.loginDialog.open) return;
+  document.querySelector('#rememberHint').textContent = `${state.auth?.rememberDays || 180} Tage angemeldet bleiben. Auf gemeinsam genutzten Geräten ausschalten.`;
   elements.loginPassword.value = "";
+  document.querySelector("#loginError").hidden = true;
   elements.loginDialog.showModal();
   window.requestAnimationFrame(() => elements.loginPassword.focus());
 }
@@ -1247,7 +1250,9 @@ async function login() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      password: elements.loginPassword.value
+      password: elements.loginPassword.value,
+      remember: document.querySelector("#loginRemember").checked,
+      deviceName: document.querySelector("#loginDeviceName").value.trim()
     })
   });
   if (!response.ok) {
@@ -1255,6 +1260,7 @@ async function login() {
     throw new Error(payload.error || "Login fehlgeschlagen");
   }
   state.auth = await response.json();
+  elements.loginPassword.value = "";
   elements.loginDialog.close();
   await loadData();
   showToast("Eingeloggt");
@@ -2078,7 +2084,7 @@ async function completeSetup() {
   syncActiveProfileAliases();
   render();
   elements.setupDialog.close();
-  showToast("Homebase eingerichtet");
+  showToast("HarborDash eingerichtet");
 }
 
 function openAdminDialog() {
@@ -2351,12 +2357,18 @@ elements.settingsForm.addEventListener("submit", (event) => {
   event.preventDefault();
   saveSettings().catch((error) => showToast(error.message));
 });
-elements.loginButton.addEventListener("click", () => login().catch((error) => showToast(error.message)));
+
 elements.logoutButton.addEventListener("click", () => logout().catch((error) => showToast(error.message)));
 elements.loginForm.addEventListener("submit", (event) => {
   if (event.submitter?.value === "cancel") return;
   event.preventDefault();
-  login().catch((error) => showToast(error.message));
+  elements.loginButton.disabled = true;
+  document.querySelector('#loginError').hidden = true;
+  login().catch(error => {
+    const message = document.querySelector('#loginError');
+    message.textContent = error.message;
+    message.hidden = false;
+  }).finally(() => { elements.loginButton.disabled = false; });
 });
 elements.addCategoryButton.addEventListener("click", addCategory);
 elements.saveCategoriesButton.addEventListener("click", () => saveCategories().catch((error) => showToast(error.message)));
@@ -2431,6 +2443,15 @@ window.setInterval(updateClock, 1000);
 window.setInterval(() => loadStatus().catch(() => {}), 60000);
 window.setInterval(() => loadWeather().catch(() => {}), 15 * 60 * 1000);
 async function refreshSharedData() {
+  if (state.auth?.authenticated && !document.hidden) {
+    const status = await fetch('/api/auth/status', { cache: 'no-store' });
+    if (status.ok && !(await status.json()).authenticated) {
+      for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
+      closeSettingsPage();
+      await loadData();
+      return;
+    }
+  }
   if (document.hidden || saveInProgress || !serverSnapshot || !state.auth?.authenticated
       || !elements.settingsPage.hidden || document.querySelector("dialog[open]") || state.noteComposerOpen) return;
   if (JSON.stringify(state.profiles) !== JSON.stringify(serverSnapshot.profiles)
@@ -2457,4 +2478,45 @@ function refreshFavicons() {
 }
 window.setInterval(refreshFavicons, FAVICON_REFRESH_MS);
 window.addEventListener("focus", refreshFavicons);
+elements.loginDialog.addEventListener('cancel', event => event.preventDefault());
+document.querySelector('#devicesButton').addEventListener('click', () => openDevices().catch(error => showToast(error.message)));
+document.querySelector('#closeDevicesButton').addEventListener('click', () => document.querySelector('#devicesDialog').close());
+document.querySelector('#revokeOthersButton').addEventListener('click', () => revokeDevice('others').catch(error => showToast(error.message)));
+
+async function openDevices() {
+  const response = await fetch('/api/auth/sessions');
+  if (!response.ok) throw new Error('Geräte konnten nicht geladen werden.');
+  const data = await response.json();
+  const list = document.querySelector('#deviceList');
+  list.replaceChildren();
+  for (const device of data.sessions) {
+    const row = document.createElement('div');
+    row.className = 'device-row';
+    const info = document.createElement('div');
+    const name = document.createElement('strong');
+    name.textContent = device.label + (device.current ? ' · Dieses Gerät' : '');
+    const detail = document.createElement('small');
+    detail.textContent = 'Angemeldet: ' + new Date(device.createdAt).toLocaleDateString('de-DE') + ' · Gültig bis ' + new Date(device.expiresAt).toLocaleDateString('de-DE');
+    info.append(name, detail);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Abmelden';
+    button.addEventListener('click', () => revokeDevice(device.id, device.current).catch(error => showToast(error.message)));
+    row.append(info, button);
+    list.append(row);
+  }
+  const dialog = document.querySelector('#devicesDialog');
+  if (!dialog.open) dialog.showModal();
+}
+
+async function revokeDevice(id, current = false) {
+  const response = await fetch('/api/auth/sessions?id=' + encodeURIComponent(id), { method: 'DELETE' });
+  if (!response.ok) throw new Error('Abmelden fehlgeschlagen.');
+  if (current) {
+    document.querySelector('#devicesDialog').close();
+    closeSettingsPage();
+    await loadData();
+  } else await openDevices();
+}
+
 loadData().catch((error) => showToast(error.message));
